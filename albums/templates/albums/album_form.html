@@ -1,0 +1,23 @@
+{% extends "albums/album_base.html" %}
+{% load bootstrap3 %}
+
+{% block album_content %}
+					<div class="col-lg-3 col-md-12">
+						<div class="box-1">
+							<h2 class="heading">Create Album</h2>
+							<p>Create a new album...</p>
+							<div class="cont">
+								<i class="fa fa-object-group" aria-hidden="true"></i>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-9 col-md-12">
+
+						  <form method="POST" action="{% url 'albums:create' %}"  enctype="multipart/form-data" id="AlbumForm">
+							{% csrf_token %}
+							{% bootstrap_form form %}
+							<p>Browse a photo for the album thumbnail.</p>
+							<input type="submit" value="Create" class="btn btn-primary btn-large">
+						  </form>
+					</div>
+{% endblock %}

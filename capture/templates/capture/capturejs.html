@@ -1,0 +1,197 @@
+{% extends "photos/photo_base.html" %}
+{% load bootstrap3 %}
+{% load staticfiles %}
+
+
+{% block photo_content %}
+<script language=javascript type='text/javascript'> 
+	{% for photo in photo_list %}
+	function hideBGImage_{{ photo.pk }}() { 
+		if (document.getElementById) {
+				document.getElementById('bgselect').style.display = 'none';
+				document.getElementById('background').value = '{{ photo.photo.url }}';
+				document.getElementById('camera_card').style.display = 'block';
+				document.getElementById('capture').style.display = 'block';
+		} 
+	} 
+	 
+	$('.modal').on('show.bs.modal', centerModal);
+	$(window).on("resize", function () {
+		$('.modal:visible').each(centerModal);
+	});
+	{% endfor %}
+	function centerModal() {
+		$(this).css('display', 'block');
+		var $dialog = $(this).find(".modal-dialog");
+		var offset = ($(window).height() - $dialog.height()) / 2;
+		// Center modal vertically in window
+		$dialog.css("margin-top", offset);
+		
+	}
+</script> 
+<!-- First, include the Webcam.js JavaScript Library -->
+<script type="text/javascript" src="{% static 'js/webcam.min.js' %}"></script>
+<!-- Configure a few settings and attach camera -->
+<script language="JavaScript">
+	Webcam.set({
+		width: 640,
+		height: 480,
+		dest_width: 1600,
+		dest_height: 1200,
+		image_format: 'jpeg',
+		jpeg_quality: 90
+	});
+</script>
+
+<!-- Modal to display large image -->
+{% for photo in photo_list %}
+	<div class="modal fade bd-example-modal-lg" id="myModal_{{ photo.pk }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLongTitle">{{ photo.message }}</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<center><img src="{{ photo.photo.url }}" class="img-responsive" style='height: 100%; width: 100%; object-fit: contain'></center>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" onclick="setup(); hideBGImage_{{ photo.pk }}()" data-dismiss="modal">Choose</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endfor %}
+	<div class="modal fade" id="modalCounter" data-backdrop="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content" style="background-color: #fff0; border-color: #fff0; text-shadow: 2px 2px 20px #ff0000;">
+				<center><h5 class="modal-title" style="font-size: 150px; color: orangered;" id="counterText"></h5></center>
+			</div>
+		</div>
+	</div>
+
+<!-- Container -->
+<div class="container h-100 d-flex">
+	<div class="jumbotron my-auto ml-auto">
+		<div class="blogs-home blog-inside common-heading-2">
+			<div class="container">
+				<div class="row">
+
+
+					<div class="col-lg-3 col-md-12">
+						<div class="box-1">
+							<h2 class="heading">Capture Photo</h2>
+							<p>Choose a background to compose your photo...</p>
+							<button id="capture" type="button" class="btn btn-primary"
+								  onClick="countDown(); $(this).hide().next().show();"
+								  data-toggle="modal" data-target="#modalCounter" style="display: none;">Take Snapshot</button>
+						</div>
+					</div>
+
+
+					<div id="bgselect" class="col-lg-9 col-md-12">
+						<div class="row">
+							{% for photo in photo_list %}
+								<div class="col-lg-4 col-md-6 col-sm-6" style="margin-bottom: 20px;">
+									<div class="blog-list list-group-item">
+										<center><input class="img-thumbnail" type="image" id="{{ photo.message }}"
+											   src="/media/{{ photo.photo_thumb.name }}" value="" width="240"
+													   data-toggle="modal" data-target="#myModal_{{ photo.pk }}"></center>
+											<h4 align="center">{{ photo.message }}</h4>
+											<p><button type="button" class="btn btn-primary"
+													   onclick="setup(); hideBGImage_{{ photo.pk }}()">Choose</button></p>
+
+									</div>
+								</div>
+							{% endfor %}
+						</div>
+					</div>
+
+					<div id="loader" class="col-lg-9 col-md-12" style="display:none;">
+						<div class="row">
+							<div class="col-md-12">
+								<div class="blog-list">
+									<center><div class="loader"></div></center>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="camera_card" class="col-lg-9 col-md-12" style="display:none;">
+						<div class="row">
+							<div class="col-md-12">
+								<div class="blog-list">
+									<center>
+										<div id="my_camera"></div>
+										<div style="padding-top: 5px">
+										</div>
+									</center>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-12" style="dispaly:none">
+						<form id="captureformjson" method="post" enctype='application/json' action="/api/images/create/">
+							{% csrf_token %}
+							<input id="image" name="photo" type="hidden" value=""/>
+							<input id="user" name="user" type="hidden" value="{{ user.pk }}"/>
+							<input id="album" name="album" type="hidden" value="2"/>
+							<input id="background" name="background" type="hidden" value=""/>
+							<input id="message" name="message" type="hidden" value=""/>
+						</form>
+					</div>
+					<!-- Code to handle taking the snapshot and displaying it locally
+					 -->
+
+					<script language="JavaScript">
+						function setup() {
+							Webcam.reset();
+							Webcam.attach( '#my_camera' );
+						}
+						
+						function countDown() {
+							var countDownDate = new Date().getTime() + 7000; // Set the date we're counting down to
+							var x = setInterval(function() { // Update the count down every 1 second
+								var now = new Date().getTime(); // Get todays date and time
+								var distance = countDownDate - now; // Find the distance between now and the count down date
+								var seconds = Math.floor((distance % (1000 * 60)) / 1000); // Time calculations for days, hours, minutes and seconds
+								document.getElementById("counterText").innerHTML = seconds + " "; // Output the result in an element with id="demo"
+								if (distance < 0) { // If the count down is over, write some text
+									clearInterval(x);
+									document.getElementById("counterText").innerHTML = "CHEESE";
+									take_snapshot();
+								}
+							}, 1000);
+						}
+
+						function take_snapshot() {
+							// take snapshot and get image data
+							Webcam.snap( function(data_uri) {
+								Webcam.freeze()
+								var raw_image_data = data_uri.replace(/^data\:image\/\w+\;base64\,/, '');
+								document.getElementById('image').value = raw_image_data;
+								document.getElementById('message').value = 'Photo taken at {% now "Y F jS H:i:s" %}';
+								document.getElementById('camera_card').style.display = 'none';
+								document.getElementById('modalCounter').style.display = 'none';
+								document.getElementById('loader').style.display = 'block';
+								document.getElementById('captureformjson').submit();
+
+								// display results in page
+								//document.getElementById('results').innerHTML = 
+									//'<h2>Here is your image:</h2>' + 
+									//'<img src="'+data_uri+'"/>';
+							} );
+						}
+					</script>
+	
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
